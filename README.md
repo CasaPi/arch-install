@@ -1,18 +1,15 @@
-ARCH-INSTALL
-=================
+Arch Linux Install
+==================
 
-Basic Arch Installation and Configuation Tutorial for Raspberry Pi 2/3.
+"Basic Arch Linux installation on Raspberry Pi 2,3"
 
 ## INSTALATION
 
-Source: [https://archlinuxarm.org/platforms/armv7/broadcom/raspberry-pi-2](https://archlinuxarm.org/platforms/armv7/broadcom/raspberry-pi-2)
+###  Partitionning
 
-###  Partition the microSD card
+* With *fdisk*:
 
-* First partition to type W95 FAT32 (LBA) with 100M size, second one to type Linux (ext4) with the rest of volume.
-
-Fdisk:
-```
+```sh
 $ fdisk /dev/sdX
 (key commands in fdisk)
 o > p > n > p > 1 > enter > +100M > t > c (create the first partition)
@@ -20,50 +17,59 @@ n > p > 2 > enter > enter (create the second one)
 w (finally, update changes)
 ```
 
-Or with [Parted](https://wiki.archlinux.org/index.php/GNU_Parted):
-```
+* Or with *parted*:
+
+```sh
 $ parted /dev/sdX
 (parted) mkpart primary fat32 1MiB 100MiB
 (parted) set 1 boot on
 (parted) mkpart primary ext4 100MiB -1s
 ```
 
-### Setup the Filesystems
+* Finally, format them:
 
-* Create and mount the FAT filesystem:
 ```
-$ mkfs.vfat /dev/sdX1
-$ mkdir boot
-$ mount /dev/sdX1 boot
+$ mkfs.vfat /dev/mmcblk0p1
+$ mkfs.ext4 /dev/mmcblk0p2
 ```
 
-* Create and mount the ext4 filesystem:
+### Download & Extract
+
+* Mount them:
+
 ```
-$ mkfs.ext4 /dev/sdX2
-$ mkdir root
-$ mount /dev/sdX2 root
+$ mkdir -p /mnt/{boot,root}
+$ mount /dev/mmcblk0p1 /mnt/boot
+$ mount /dev/mmcblk0p2 /mnt/root
 ```
 
-### Download and extraction root filesystem
+* Download Archlinux:
 
-* Type the following commands as root, not via sudo:
 ```
 $ wget http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-2-latest.tar.gz
-$ bsdtar -xpf ArchLinuxARM-rpi-2-latest.tar.gz -C root
+```
+
+* Extract files to `/mnt/root`:
+
+```sh
+$ bsdtar -xpf ArchLinuxARM-rpi-2-latest.tar.gz -C /mnt/root
 $ sync
 ```
 
-* Move boot files to the first partition:
+* Move files for the `/boot` partition:
+
 ```
-$ mv root/boot/* boot
+$ mv /mnt/root/boot/* /mnt/boot
 ```
 
-* Unmount the two partitions:
+* Unmount:
+
 ```
-$ umount boot root
+$ sync
+$ umount /mnt/{boot,root}
 ```
 
-* Finally, plug the microSD and boot.
+* Plug the SD card and turn on the Raspberry Pi
 
 ## BOOT
 
@@ -85,21 +91,11 @@ $ pacman-key --populate archlinuxarm
 $ pacman -Syu
 ```
 
-### Choose your terminal and editor
+* At least install this:
 
-* Afterwards change $TERM ('backspace' key may be a thorn in your foot):
-```
-$ echo "export TERM=xterm" > $HOME/.bashrc
-$ su (passwd = 'root')
-$ reboot
-```
-
-* Installing your favorite editor:
-```
-$ su (root)
-$ pacman -S vim
-$ (quit root mode, Ctrl-D)
-$ echo "export EDITOR=vim" >> ~/.bashrc (optional)
+```sh
+$ pacman -S sudo neovim git make wget vlc python-pip python-virtualenv
+$ echo "export EDITOR='nvim -p'\nexport TERM=xterm">> ~/.bashrc
 ```
 
 ### Language and Time
@@ -150,27 +146,37 @@ it, simply run:
 $ timedatectl set-ntp true
 ```
 
-### Disable root
+### Create an user
 
-```
-$ su (root)
-$ EDITOR=vim visudo
-```
-Uncomment this line '%wheel ALL=(ALL) ALL' to allow members of group wheel to execute any command.
+* Uncomment the `%wheel ALL=(ALL) ALL` line:
 
-* Now, install *sudo*.
+```sh
+$ EDITOR=nvim visudo
+```
+
+* Now, install *sudo*:
+
 ```
 $ pacman -S sudo
 ```
 
 * Add a new user, add it in the 'wheel' group:
+
 ```
 $ useradd -m -G wheel -s /bin/bash <username>
 ```
 
-- Quit the root-mode and  lock the root-user with the following command:<br>
+* Add groups to your new user (mandatory to run *startx*):
+
+```sh
+$ usermod -a -G tty,video,input,audio ventto && logout
 ```
-$ sudo passwd -l root
+
+**Optionally:**
+
+* Quit the root-mode and  lock the root-user with the following command:<br>
+```
+$ passwd -l root
 ```
 
 If the message "passwd: password expiry information changed". Don't worry.
@@ -178,6 +184,23 @@ If the message "passwd: password expiry information changed". Don't worry.
 * Finally, delete the useless user:
 ```
 $ sudo userdel alarm
+```
+
+### Xorg
+
+* Set the `config.txt` file (more details in sections below):
+
+```sh
+gpu_mem=64
+dtparam=audio=on
+hdmi_drive=2
+dtoverlay=vc4-kms-v3d
+```
+
+* Install *X* and a window manager:
+
+```sh
+$ pacman -S xorg xorg-xinit xf86-video-fbdev vlc i3-wm i3lock i3status dmenu
 ```
 
 ## SSH Server
