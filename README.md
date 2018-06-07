@@ -13,7 +13,7 @@ Source: [https://archlinuxarm.org/platforms/armv7/broadcom/raspberry-pi-2](https
 
 Fdisk:
 ```
-$ fdisk /dev/sdX 
+$ fdisk /dev/sdX
 (key commands in fdisk)
 o > p > n > p > 1 > enter > +100M > t > c (create the first partition)
 n > p > 2 > enter > enter (create the second one)
@@ -65,9 +65,22 @@ $ umount boot root
 
 * Finally, plug the microSD and boot.
 
-## CONFIGURATION
+## BOOT
 
-* Before anything, make the system upgrade:
+### Login
+
+Use the serial console or SSH to the IP address given to the board by your router.
+Login as the default user `alarm` with the password `alarm`.
+The default `root` password is `root`.
+
+* Initialize the pacman keyring and populate the Arch Linux ARM package signing keys:
+
+```sh
+$ pacman-key --init
+$ pacman-key --populate archlinuxarm
+```
+* And then upgrade the system:
+
 ```
 $ pacman -Syu
 ```
@@ -117,7 +130,7 @@ $ echo "LANG=en_US.UTF-8" >> /etc/locale.conf
 
 **Time:**
 
-* Check the current zone defined for the system: 
+* Check the current zone defined for the system:
 ```
 timedatectl
 ```
@@ -128,6 +141,14 @@ timedatectl set-timezone Zone/Subzone
 (example) timedatectl set-timezone Europe/Paris
 ```
 Get your information: `/usr/share/zoneinfo/<Zone>/<Subzone>`
+
+
+* The systemd-timesyncd service is available with systemd. To start and enable
+it, simply run:
+
+```sh
+$ timedatectl set-ntp true
+```
 
 ### Disable root
 
@@ -217,11 +238,13 @@ You need to add some line to `/boot/config.txt`.<br>
 Just in case, check if the lines below already exist.
 
 * Force the monitor to HDMI mode so that sound will be sent over HDMI cable:
+
 ```
 $ sudo echo "hdmi_drive=2" >> /boot/config.txt
 ```
 
 * Use HDMI mode even if no HDMI monitor is detected:
+
 ```
 $ sudo echo "hdmi_force_hotplug=1" >> /boot/config.txt
 ```
@@ -264,19 +287,20 @@ $ vim /home/xxx/.asoundrc
 * Copy and paste the following into the file then save it:
 ```
 pcm.!default {
-	type hw
-	card 0
+    type hw
+    card 0
 }
 
 ctl.!default {
-	type hw           
-	card 0
+    type hw
+    card 0
 }
 ```
 * Reboot
 
 * Make a test:
-```
+
+```sh
 $ sudo aplay /usr/share/sounds/alsa/Front_Center.wav
 ```
 
