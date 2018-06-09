@@ -10,7 +10,7 @@ Arch Linux Install
 * With *fdisk*:
 
 ```sh
-$ fdisk /dev/sdX
+$ fdisk /dev/mmcblk0
 (key commands in fdisk)
 o > p > n > p > 1 > enter > +100M > t > c (create the first partition)
 n > p > 2 > enter > enter (create the second one)
@@ -20,7 +20,7 @@ w (finally, update changes)
 * Or with *parted*:
 
 ```sh
-$ parted /dev/sdX
+$ parted /dev/mmcblk0
 (parted) mkpart primary fat32 1MiB 100MiB
 (parted) set 1 boot on
 (parted) mkpart primary ext4 100MiB -1s
