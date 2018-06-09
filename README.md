@@ -94,8 +94,10 @@ $ pacman -Syu
 * At least install this:
 
 ```sh
-$ pacman -S sudo neovim git make wget vlc python-pip python-virtualenv
-$ echo "export EDITOR='nvim -p'\nexport TERM=xterm">> ~/.bashrc
+$ pacman -S base-devel unzip patch sudo neovim git make wget \
+            python-pip python-virtualenv
+
+$ echo "export EDITOR='nvim'\nexport TERM=xterm">> ~/.bashrc
 ```
 
 ### Language and Time
@@ -170,6 +172,12 @@ $ useradd -m -G wheel -s /bin/bash <username>
 
 ```sh
 $ usermod -a -G tty,video,input,audio ventto && logout
+```
+
+* Set the password of the new user:
+
+```sh
+$ passwd ventto
 ```
 
 **Optionally:**
@@ -330,11 +338,4 @@ $ sudo aplay /usr/share/sounds/alsa/Front_Center.wav
 * If it's not loudly enough, try the following command and increase the volume:
 ```
 $ sudo alsamixer
-```
-
-## Finally
-
-* These following packages will be quasi indispensable for future usages:
-```
-$ sudo pacman -S base-devel git wget
 ```
